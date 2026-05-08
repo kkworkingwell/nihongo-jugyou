@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="user-scalable=no">
+    <title>🌸日文存在動詞挑戰🌸</title>
+    <style>
+        :root { --primary: #3498db; --success: #2ecc71; --error: #e74c3c; 
+                --highlight: #23ad8b; --bg: #f8f9fa;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+               display: flex; flex-direction: column; height: 100vh; margin: 0; 
+               background-color: var(--bg); color: #333;}
+        
+        /* 計分板 */
+        #side-panel { position: absolute; top: 25px; right: 30px;
+                      display: flex; gap: 15px; z-index: 100;}
+
+        #score-board { background: rgba(255,255,255,0.9); padding: 15px 25px; 
+                       border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+                       font-size: 1.8rem; z-index: 10; text-align:left;}
+        #end-btn { padding: 15px; font-size: 1.5rem; cursor: pointer;
+                   background: #e74c3c; color: white; border: none; border-radius: 13px;
+                   font-weight: bold; transition: 0.2s; box-shadow: 0 4px #c0392b;}
+        #end-btn:active { transform: translateY(2px); box-shadow: 0 2px #c0392b;}
+
+        /* 上方 */
+        #top-section { flex: 1.2; display: flex; justify-content: center; align-items: center;
+                       gap: 80px; padding: 60px 20px 20px 20px;
+                       border-bottom: 4px solid #ddd; background: white;}
+        .image-container { text-align: center; font-weight: bold; font-size: 2.0rem; }
+        #top-section svg { width: 200px; height: 200px; margin-bottom: 5px; }
+
+        /* 動畫樣式 */
+        @keyframes shake { 0% { transform: translateX(0);} 25% { transform: translateX(-12px);}
+                           50% { transform: translateX(12px);} 75% { transform: translateX(-12px);} 100% { transform: translateX(0);}}
+        .shake-anim { animation: shake 0.4s ease-in-out; border-color: var(--error) !important; }
+        .correct-anim { transform: scale(1.15); border-color: var(--success) !important; }
+
+        /* 中間 */
+        #middle-section { flex: 2; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #fff;}
+        .target-box { width: 250px; height: 250px; display: flex; justify-content: center; align-items: center;
+                      border: 6px solid var(--primary); border-radius: 30px;
+                      background: white; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.05);}
+        #target-name { font-size: 2.2rem; font-weight: bold; margin-top: 15px; color: #2c3e50; }
+        #feedback { margin: 45px 15px; font-size: 2.2rem; height: 1.5em; font-weight: bold;}
+
+        /* 下方 */
+        #bottom-section { flex: 1.2; display: flex; justify-content: center; align-items: center;
+                          background: #f1f1f1; border-top: 3px solid #ddd;}
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 25px;}
+        button.game-btn { padding: 35px 70px; font-size: 2.6rem; cursor: pointer; border: none; border-radius: 18px;
+                 background-color: var(--primary); color: white; box-shadow: 0 8px #2980b9;
+                 transition: 0.1s; min-width: 250px; font-weight: bold;}
+        button.btn-neg { background-color: #7f8c8d; box-shadow: 0 8px #636e72;}
+        button.game-btn:active { box-shadow: 0 0 #788b96; transform: translateY(4px);}
+      
+        /* 禁用按鈕樣式 */
+        button:disabled { background-color: #bdc3c7 !important; box-shadow: none !important; transform: none !important; cursor: progress; opacity: 0.6; }
+
+        /* 特效：正確時縮放 */
+        .correct-anim { transform: scale(1.1); border-color: var(--success) !important;}
+
+        /* 新增：結算視窗掉落動畫 */
+        @keyframes dropIn { 0% { transform: translateY(-500px) scale(0.5); opacity: 0;}
+                            70% { transform: translateY(30px) scale(1.05); opacity: 1;} 100% { transform: translateY(0) scale(1);}}
+
+        /* 新增：按鈕呼吸燈動畫 */
+        @keyframes pulseSuccess { 0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); transform: scale(1);}
+                                  70% { box-shadow: 0 0 0 20px rgba(46, 204, 113, 0); transform: scale(1.05);}
+                                  100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); transform: scale(1);}}
+
+        /* 統計彈窗樣式 */  
+        #result-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+                          background: rgba(0,0,0,0.9); z-index: 200;
+                          justify-content: center; align-items: center; color: white; text-align: center;}
+        .result-card { background: white; color: #333; padding: 90px; border-radius: 30px;
+                       width: 80%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                       animation: dropIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; /* 加上彈跳曲線 */}
+        .result-card h2 { font-size: 4rem; color: var(--primary); margin-top: 0; }
+        .result-line { font-size: 3rem; margin: 15px 0; border-bottom: 3px solid #eee; padding-bottom: 20px;}
+        .restart-btn { margin-top: 20px; padding: 15px 40px; font-size: 3rem; font-weight: bold;
+                       background: var(--success); color: white; border: none; border-radius: 15px; cursor: pointer;
+                       animation: pulseSuccess 2s infinite; /* 無限循環呼吸效果 */ border-bottom: 5px solid #27ae60;}
+        .restart-btn:active { transform: scale(0.95); border-bottom-width: 2px;}
+        
+    </style></head>
+<body>
+
+    <!-- 側邊面板：計分與結束 -->
+    <div id="side-panel">
+        <div id="score-board">
+            分數: <span id="score" style="color:var(--primary)">0</span> <br>
+            連啱: <span id="combo" style="color:var(--success)">0</span>
+        </div>
+        <button id="end-btn" onclick="showResults()">結束訓練</button>
+    </div>
+
+    <!-- 統計彈窗 -->
+    <div id="result-overlay">
+        <div class="result-card">
+            <h2>練習成果</h2>
+            <div class="result-line">總共得到 <span id="final-score" style="color:var(--primary); font-weight:bold;">0</span> 分</div>
+            <div class="result-line">最多連啱 <span id="max-combo" style="color:var(--success); font-weight:bold;">0</span> 題</div>
+            <div class="result-line">答啱率係 <span id="accuracy" style="color:var(--highlight); font-weight:bold;">0%</span></div>
+            <button class="restart-btn" onclick="resetGame()">嚟多次🎉</button>
+        </div>
+    </div>
+
+    <div id="top-section"></div>
+
+    <div id="middle-section">
+        <div id="feedback">上面有冇...?</div>
+        <div class="target-box" id="main-target"></div>
+        <p id="target-name"></p>
+    </div>
+
+    <div id="bottom-section">
+        <div class="btn-group">
+            <button class="game-btn" onclick="checkAnswer('いる')">いる</button>
+            <button class="game-btn" onclick="checkAnswer('ある')">ある</button>
+            <button class="game-btn btn-neg" onclick="checkAnswer('いない')">いない</button>
+            <button class="game-btn btn-neg" onclick="checkAnswer('ない')">ない</button>
+        </div>
+    </div>
+
+    <script>
+        const items = [
+            { name: 'ねこ (猫)', type: 'living', svg: '<img src="images/cat-svgrepo-com.svg">' },
+            { name: 'ひと (人)', type: 'living', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="30" r="20" fill="#FFCC99"/><rect x="40" y="50" width="20" height="40" fill="#4A90E2"/></svg>' },
+            { name: 'はな (花)', type: 'object', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="yellow"/><path d="M50 10 Q60 30 50 50 Q40 30 50 10" fill="#e74c3c"/><path d="M90 50 Q70 60 50 50 Q70 40 90 50" fill="#e74c3c"/><path d="M50 90 Q40 70 50 50 Q60 70 50 90" fill="#e74c3c"/><path d="M10 50 Q30 40 50 50 Q30 60 10 50" fill="#e74c3c"/></svg>' },
+            { name: 'ほん (本)', type: 'object', svg: '<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="70" fill="#8B4513"/><rect x="25" y="25" width="50" height="60" fill="white"/></svg>' },
+            { name: 'いぬ (犬)', type: 'living', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="#bdc3c7"/><path d="M25 25 L35 45 L15 45 Z" fill="#7f8c8d"/><path d="M75 25 L65 45 L85 45 Z" fill="#7f8c8d"/></svg>' },
+            { name: 'つくえ (机)', type: 'object', svg: '<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="10" fill="#d35400"/><rect x="20" y="50" width="5" height="30" fill="#d35400"/><rect x="75" y="50" width="5" height="30" fill="#d35400"/></svg>' }
+        ];
+
+        let currentTopItems = [];
+        let currentTarget = null;
+        // 統計變數
+        let score = 0; let combo = 0; let highestCombo = 0; let totalClicks = 0; let correctClicks = 0;
+
+        // 切換按鈕狀態
+        function setButtonsDisabled(disabled) {
+            const btns = document.querySelectorAll('.game-btn');
+            btns.forEach(btn => btn.disabled = disabled);
+        }
+
+        function init() {
+            setButtonsDisabled(false); // 題目切換完成，恢復按鈕
+            const box = document.querySelector('.target-box');
+            box.classList.remove('correct-anim', 'shake-anim');
+
+            const topSection = document.getElementById('top-section');
+            topSection.innerHTML = '';
+            document.querySelector('.target-box').classList.remove('correct-anim');
+            
+            // 隨機選3個
+            const shuffled = [...items].sort(() => 0.5 - Math.random());
+            currentTopItems = shuffled.slice(0, 3);
+            
+            currentTopItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'image-container';
+                div.innerHTML = item.svg + `<div>${item.name.split(' ')[0]}</div>`;
+                topSection.appendChild(div);
+            });
+
+            // 隨機出題
+            currentTarget = items[Math.floor(Math.random() * items.length)];
+            document.getElementById('main-target').innerHTML = currentTarget.svg;
+            document.getElementById('target-name').innerText = currentTarget.name;
+        }
+
+        function checkAnswer(choice) {
+            const box = document.querySelector('.target-box');
+            box.classList.remove('shake-anim'); // 先重設震動，以免連點無反應
+
+            totalClicks++;
+            const isLiving = currentTarget.type === 'living';
+            const exists = currentTopItems.some(item => item.name === currentTarget.name);
+            
+            let correct = isLiving ? (exists ? "いる" : "いない") : (exists ? "ある" : "ない");
+            const feedback = document.getElementById('feedback');
+            
+            if (choice === correct) {
+                setButtonsDisabled(true); // 答對即刻鎖定按鈕，防止過渡期重複點擊
+                correctClicks++;
+                score += 10 + (combo * 2);
+                combo++;
+                if (combo > highestCombo) highestCombo = combo; // 更新最高連擊
+                feedback.innerHTML = `<span style="color:var(--success)">すごいです！ ${currentTarget.name.split(' ')[0]}が${correct}。</span>`;
+                document.getElementById('score').innerText = score;
+                document.getElementById('combo').innerText = combo;
+                document.querySelector('.target-box').classList.add('correct-anim');
+                setTimeout(init, 500);
+            } else {
+                combo = 0;
+                document.getElementById('combo').innerText = combo;
+                
+                // 回答錯誤：加入震動效果
+                void box.offsetWidth; // 強制重繪以重啟動畫
+                box.classList.add('shake-anim');
+
+                // 錯誤提示邏輯
+                let hint = isLiving ? "會移動的" : "不移動的";
+                let hint2 = isLiving ? "いる/いない" : "ある/ない";
+                let existHint = exists ? "有在" : "冇喺度";                
+                feedback.innerHTML = `<span style="color:var(--error)">もう一回！
+                                      <span style="color:var(--highlight)">${hint}</span>用<span style="color:var(--highlight); text-decoration: underline">${hint2}</span>
+                                      ，並且上面<span style="color:var(--primary)">${existHint}</span>喔。</span>`;
+
+                // 錯誤時移除震動類以便下次點擊再觸發
+                setTimeout(() => box.classList.remove('shake-anim'), 400);
+            }
+        }
+
+        // 顯示結果視窗
+        function showResults() {
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('max-combo').innerText = highestCombo;
+            
+            // 計算正確率
+            let acc = totalClicks === 0 ? 0 : Math.round((correctClicks / totalClicks) * 100);
+            document.getElementById('accuracy').innerText = acc + "%";
+            document.getElementById('result-overlay').style.display = 'flex';
+        }
+
+        // 重新開始
+        function resetGame() {
+            score = 0;
+            combo = 0;
+            highestCombo = 0;
+            totalClicks = 0;
+            correctClicks = 0;
+            document.getElementById('score').innerText = "0";
+            document.getElementById('combo').innerText = "0";
+            document.getElementById('feedback').innerText = "上面有冇...?";
+            document.getElementById('result-overlay').style.display = 'none';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>
